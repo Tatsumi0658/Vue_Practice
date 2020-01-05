@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.12.0/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.13.1/lodash.min.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      {{ msg }}
+    </div>
+
+    <div id="app2">
+      <span v-bind:title="msg">
+        Hover your mouse over me for a few seconds to see my dynamically bound title!
+      </span>
+    </div>
+
+    <div id="app3">
+      <span v-if="seen">Now you see</span>
+    </div>
+
+    <div id="app4">
+      <ol>
+        <li v-for="todo in todos">
+          {{ todo.text }}
+        </li>
+      </ol>
+    </div>
+
+    <div id="app5">
+      <p>
+        {{ msg }}
+        </p>
+      <button v-on:click="reverseMsg">Reverse Message</button>
+    </div>
+
+    <div id="app6">
+      <p>
+        {{ msg }}
+        </p>
+      <input v-model="msg">
+    </div>
+
+    <div id="app7">
+      <ol>
+        <todo-item
+          v-for="item in groceryList"
+          v-bind:todo="item"
+          v-bind:key="item.id"></todo-item>
+      </ol>
+    </div>
+
+    <div id="demo">
+      {{ fullName }}
+    </div>
+
+    <div id="watch-example">
+      <p>
+        Ask yes/no question:
+        <input v-model="question">
+      </p>
+      <p>
+        {{ answer }}
+      </p>
+    </div>
+
+    <ul id="v-for-object" class="demo">
+      <li v-for="value in object">
+        {{ value }}
+      </li>
+      <br>
+      <div v-for="(value, name) in object">
+        {{ name }}: {{ value }}
+      </div>
+      <br>
+      <div v-for="(value, name, index) in object">
+        {{ index }}. {{ name }}: {{ value }}
+      </div>
+    </ul>
+
+    <div id="app8">
+      <div v-for="n in evenNumbers">
+          {{ n }}
+      </div>
+    </div>
+
+    <div id="app9">
+      <div v-for="n in even(numbers)">
+        {{ n }}
+      </div>
+    </div>
+
+    <div id="todo-list-example">
+      <form v-on:submit.prevent="addNewTodo">
+        <label for="new-todo">Add a todo</label>
+        <input
+          v-model="newTodoText"
+          id="newtodo"
+          placeholder="new todo">
+        <<button>Add</button>
+      </form>
+      <ul>
+        <li
+          is="todo-item"
+          v-for="(todo, index) in todos"
+          v-bind:key="todo.id"
+          v-bind:title="todo.title"
+          v-on:remove="todos.splice(index, 1)"
+        ></li>
+      </ul>
+    </div>
+
+  </body>
+</html>
+<script>
+  var app = new Vue({
+    el: '#app',
+    data:{
+      msg: 'Hello!'
+    }
+  });
+
+  var app2 = new Vue({
+    el: '#app2',
+    data:{
+      msg: 'You loaded this page on ' + new Date().toLocaleString()
+    }
+  })
+
+  var app3 = new Vue({
+    el: '#app3',
+    data:{
+      seen: false /*trueで表示、falseで非表示*/
+    }
+  })
+
+  var app4 = new Vue({
+    el: '#app4',
+    data:{
+      todos:[
+        { text: 'first' },
+        { text: 'second'},
+        { text: 'third'},
+      ]
+    }
+  })
+
+  var app5 = new Vue({
+    el: '#app5',
+    data:{
+      msg: 'Hello world'
+    },
+    methods:{
+      reverseMsg: function(){
+        this.msg = this.msg.split('').reverse().join('')
+      }
+    }
+  })
+
+  var app6 = new Vue({
+    el: '#app6',
+    data: {
+      msg: 'Hello'
+    }
+  })
+
+  Vue.component('todo-item',{
+    props:['todo'],
+    template: '<li> {{ todo.text }} </li>'
+  })
+
+  var app7 = new Vue({
+    el: '#app7',
+    data:{
+      groceryList:[
+        { id:0, text:'aaa'},
+        { id:1, text:'bbb'},
+        { id:2, text:'ccc'}
+      ]
+    }
+  })
+
+  new Vue({
+    data:{
+      a: 1
+    },
+    created: function(){
+      console.log('a is:' + this.a)
+    }
+  })
+
+  var vm = new Vue({
+    el: '#demo',
+    data: {
+      firstName: 'foo',
+      lastName: 'bar'
+    },
+    computed:{
+      fullName: function(){
+        return this.firstName + ' ' + this.lastName
+      }
+    }
+  })
+
+  var watchExampleVM = new Vue({
+    el: '#watch-example',
+    data:{
+      question: '',
+      answer: 'I cannot give you an answer until you ask a question!'
+    },
+    watch:{
+      //この関数は、questionが変わるごとに実行されます
+      question: function(newQuestion, oldQuestion){
+        this.answer = 'Waiting for you to stop typing ...'
+        this.debouncedGetAnswer()
+      }
+    },
+    created: function(){
+      this.debouncedGetAnswer = _.debounce(this.getAnswer, 500)
+    },
+    methods:{
+      getAnswer: function(){
+        if(this.question.indexOf('?') === -1){
+          this.answer = 'Questions usually contain a question mark. ;-)'
+          return
+        }
+        this.answer = 'Thinking ...'
+        var vm = this
+        axios.get('https://yesno.wtf/api').then(function(response){
+          vm.answer = _.capitalize(response.data.answer)
+        }).catch(function(error){
+          vm.answer = 'Error! Could not reach the API. ' + error
+        })
+      }
+    }
+  })
+
+  new Vue({
+    el: "#v-for-object",
+    data:{
+      object:{
+        title: 'How do you lists in Vue',
+        author: 'Jane Duo',
+        publishedAt: '2020-01-01'
+      }
+    }
+  })
+
+  var app8 = new Vue({
+    el: '#app8',
+    data: {
+      numbers: [ 1, 2, 3, 4, 5 ]
+    },
+    computed: {
+      evenNumbers: function () {
+        return this.numbers.filter(function (number) {
+          return number % 2 === 0
+        })
+      }
+    }
+  })
+
+  var app9 = new Vue({
+    el: '#app9',
+    data:{
+      numbers:[1,2,3,4,5]
+    },
+    methods:{
+      even: function(numbers){
+        return numbers.filter(function(number){
+          return number % 2 === 0
+        })
+      }
+    }
+  })
+
+  Vue.component('todo-item',{
+    template: '<li>{{ title }}<button v-on:click="$emit(\'remove\')">Remove</button></li>',
+    props:['title']
+  })
+
+  new Vue({
+    el: '#todo-list-example',
+    data:{
+      newTodoText: '',
+      todos: [
+        {
+          id: 1,
+          title: 'Do the dishes'
+        },
+        {
+          id: 2,
+          title: 'Take out the trash'
+        },
+        {
+          id: 3,
+          title: 'Mow the Jawn'
+        }
+      ],
+      nextTodoId: 4
+    },
+    methods:{
+      addNewTodo: function(){
+        this.todos.push({
+          id: this.nextTodoId++,
+          title: this.newTodoText
+        })
+        this.newTodoText = ''
+      }
+    }
+  })
+</script>
